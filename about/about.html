@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="utf-8">
+	<meta name="viewport" content="initial-scale=1, minimum-scale=1, width=device-width">
+	<meta name="theme-color" content="green" />
+	<title>Go Mart</title>
+	<meta property="og:title" content="Go Mart">
+	<meta name="description" content="Go Mart is collection of fresh vegetables and grocery products.">
+	<meta property="og:description" content="Go Mart is collection of fresh vegetables and grocery products.">
+	<meta name="keywords" content="go mart, vegetable shop in village, grocery shop in village">
+	<meta name="author" content="Manish Patel, Nitish Prasad">
+    <link rel="shortcut icon" href="../sys_images/logo.png" />
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css"
+		integrity="sha384-r4NyP46KrjDleawBgD5tp8Y7UzmLA05oM1iAEQ17CSuDqnUK2+k9luXQOfXJCJ4I" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+		body {
+			font-family: poppins;
+			margin: 0px;
+			padding: 0px;
+			font-family: poppins;
+			background-color: #ffffff;
+			font-size:14px;
+		}
+		* {
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: none;
+            color: black;
+        }
+
+        a:hover {
+            text-decoration: none;
+            color: black;
+        }
+
+		nav {
+			width: 100%;
+			box-shadow: 2px 2px 30px rgba(0, 0, 0, 0.05);
+			z-index: 100;
+		}
+
+		.navigation {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 5px;
+		}
+
+		h1 {
+			font-size: 16px;
+			margin-left: 10px;
+		}
+		h2 {
+			font-size: 16px;
+			margin-left: 10px;
+		}
+
+		.logo {
+			width: 200px;
+			margin-left: 10px;
+			text-align:center;
+		}
+
+		.logo img {
+			height: 40px;
+		}
+		.self-img {
+			text-align:center;
+		}
+		.self-img img {
+			height: 100px;
+			width: 100px;
+			border-radius:50%;
+		}
+
+		.right-menu a {
+			text-decoration: none;
+			margin: 0px 10px;
+			font-size: 1.2rem;
+			color: rgba(0, 0, 0, 0.7);
+		}
+
+		.right-menu a:hover {
+			color: #0b9d8a;
+			transition: all ease 0.3s;
+		}
+		.socialmedia a {
+			text-decoration: none;
+			font-size: 16px;
+			color: black;
+		}
+
+		.socialmedia a:hover {
+			color: #f0ac1b;
+		}
+		@keyframes fade {
+			0% {
+				opacity: 0;
+			}
+
+			100% {
+				opacity: 1;
+			}
+		}
+
+		.fix-nav {
+			width: 100%;
+			position: -webkit-sticky;
+			position: sticky;
+			top: 0;
+			left: 0px;
+			background-color: #ffffff;
+			box-shadow: 2px 2px 30px rgba(0, 0, 0, 0.05);
+			z-index: 102;
+		}
+
+		@media(max-width:1000px) {
+			nav {
+				position: relative;
+			}
+
+			.navigation {
+				height: 50px;
+			}
+
+			.fix-nav {
+				height: 50px;
+			}
+
+			.menu {
+				position: absolute;
+				top: 110px;
+				left: 0px;
+				background-color: #ffffff;
+				border-bottom: 4px solid #0b9d8a;
+				width: 100%;
+				padding: 0px;
+				margin: 0px;
+				z-index: 102;
+				flex-direction: column;
+				display: none;
+			}
+
+			.fix-nav .menu {
+				top: 50px;
+			}
+
+			.navigation.active .menu {
+				display: block;
+			}
+		}
+
+		@media(max-width:700px) {
+
+			h1 {
+				font-size: 16px;
+				margin-left: 10px;
+			}
+		}
+		.card-footer{
+			background:white;
+		}
+		.subtitle{
+			font-size:13px;
+			color:grey;
+			font-weight:400;
+			padding:4px;
+		}
+	</style>
+</head>
+
+<body>
+	<!--menu-bar----------------------------------------->
+	<header class="navigation fix-nav">
+		<!--logo------------>
+		<div class="logo-img">
+			<div class="d-inline-block">
+				<a href="#" class="logo"><img src="../sys_images/logo.png" alt="logo"></a>
+			</div>
+			<div class="d-inline-block">
+				<h1>About Developers</h1>
+			</div>
+		</div>
+	</header>
+	<!-- Create a card -->
+	<div class="row pb-5 pl-5 pr-5">
+		<div class="col-sm-6 p-5 border mt-5">
+			<div class="self-img p-3 text-center">
+				<img class="" src="../sys_images/nitish.jpg" alt="Owner Image">
+			</div>
+			<div class="title text-center">
+				<h5 class="p-3 h5">
+					<b>Nitish Prasad</b><br/>
+					<b class="subtitle">Frontend Developer</b>
+				</h5>
+			</div>
+			<div class="info p-2 text-center">
+				An Undergraduate student at SSIPMT, Raipur with a keen interest in Software Development & UI/ UX Designing and always willing to learn new technologies.
+			</div>
+			<div class="pt-5 text-center">
+				<button class="btn button-primary btn-sm float-left" id="left">
+					<div class="socialmedia">
+						<a href="https://github.com/002-Nitish900" class="fa fa-github"> <br>
+							<span aria-hidden="true">Github</span>
+						</a>
+					</div>
+				</button>
+
+				<button class="btn btn-sm float-right" id="right">
+					<div class="socialmedia">
+						<a href="https://www.linkedin.com/in/nitish-prasad-429b531a4" class="fa fa-linkedin"> <br>
+							<span aria-hidden="true">LinkedIn</span>
+						</a>
+					</div>
+				</button>
+			</div>
+		</div>
+		<div class="col-sm-6 p-5 border mt-5">
+			<div class="self-img p-3 text-center">
+				<img class="" src="../sys_images/manish.jpg" alt="Owner Image">
+			</div>
+			<div class="title text-center">
+				<h5 class="p-3 h5">
+					<b>Manish Patel</b><br/>
+					<b class="subtitle">Backend Developer</b>
+				</h5>
+			</div>
+			<div class="info p-2 text-center">
+				Studying B.Tech in information technology engineering. 
+				Wants to learn, discover and create problem solving products and services to enhance the modern life style and environmental condition.
+			</div>
+			<div class="pt-5 text-center">
+				<button class="btn button-primary btn-sm float-left" id="left">
+					<div class="socialmedia">
+						<a href="https://www.facebook.com/manishkp.mkp" class="fa fa-facebook"> <br>
+							<span aria-hidden="true">Facebook</span>
+						</a>
+					</div>
+				</button>
+
+				<button class="btn btn-sm float-right" id="right">
+					<div class="socialmedia">
+						<a href="https://www.instagram.com/manish_patel_56" class="fa fa-instagram"> <br>
+							<span aria-hidden="true">Instagram</span>
+						</a>
+					</div>
+				</button>
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>
