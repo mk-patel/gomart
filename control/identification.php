@@ -12,10 +12,11 @@ require_once 'connection.php';
 */
 $mobile_number = $_SESSION["mobile_number"];
 $password = $_SESSION["password"];
-$query = "select user_id,mobile_number,password,user_wallet_owner from user where mobile_number='$mobile_number' and password='$password'";
+$query = "select user_id,mobile_number,password,user_wallet_owner,user_loc_id from user where mobile_number='$mobile_number' and password='$password'";
 $result = mysqli_query($conn, $query);
 $row = mysqli_fetch_assoc($result);
 $user_id = $row["user_id"];
+$user_loc_id = $row["user_loc_id"];
 $user_wallet_owner = $row["user_wallet_owner"];
 if(empty($mobile_number) || empty($password)){
 	header("location: ../login/signin.php");
