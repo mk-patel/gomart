@@ -413,7 +413,7 @@ function loader(){
 	</script>
 	<div class="row categories">
 	<?php
-		$select = "select ct_id, ct_name, ct_image from categories order by ct_id desc";
+		$select = "select ct_id, ct_name, ct_image from categories order by ct_id asc";
 		$select_result = mysqli_query($conn, $select);
 		if(mysqli_num_rows($select_result)<= 0){
 			echo "No categories yet.";
