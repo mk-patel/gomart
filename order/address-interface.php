@@ -188,13 +188,26 @@
 	<div class="container">
 	<?php
 	
-		if(isset($_GET["pr_id"])){
-			$pr_id_count = count($_GET["pr_id"]);
+		if(isset($_POST["pr_id"])){
+			$pr_id_count = count($_POST["pr_id"]);
 			if($pr_id_count > 0) {
+				$sum_amount=0;
+				$sum_wallet=0;
+				$sum_quantity=0;
 				for ($i=0; $i < $pr_id_count; $i++){
-					$pr_id[] = mysqli_real_escape_string($conn, $_GET["pr_id"][$i]);
-					$quantity[] = mysqli_real_escape_string($conn, $_GET["quantity"][$i]);
-					$price[] = mysqli_real_escape_string($conn, $_GET["price"][$i]);
+					$pr_id[] = mysqli_real_escape_string($conn, $_POST["pr_id"][$i]);
+					$quantity[] = mysqli_real_escape_string($conn, $_POST["quantity"][$i]);
+					$price[] = mysqli_real_escape_string($conn, $_POST["price"][$i]);
+					$total_price[] = mysqli_real_escape_string($conn, $_POST["price"][$i]*$_POST["quantity"][$i]);
+					$pr_wallet_disc[] = mysqli_real_escape_string($conn, $_POST["pr_wallet_disc"][$i]*$_POST["quantity"][$i]);
+					$sum_amount=$sum_amount+$total_price[$i];
+					if($user_wallet_owner==1){
+						$sum_wallet=$sum_wallet+$pr_wallet_disc[$i];
+					}else{
+						$sum_wallet=0;
+					}
+					
+					$sum_quantity=$sum_quantity+$quantity[$i];
 			}
 		
 			// generating randome number for order id.
@@ -223,9 +236,24 @@
 			<input type="hidden" value="<?php echo implode(",",$price); ?>" name="order_pricing">
 			<input type="hidden" value="<?php echo implode(",",$quantity); ?>" name="order_quantity">
 			<input type="hidden" value="<?php echo implode(",",$pr_id); ?>" name="order_product_id">
-				<p>Order ID- <b><?php echo $order_unique_id; ?></b><br/>
-					Order Details -<br/> <b>Total Pricing Rs. : <?php echo implode(",", $price);?></b> <br/> Quantity :  <?php echo implode(",", $quantity);?><br/>
-				</p>
+			
+			<input type="hidden" value="<?php echo $sum_amount; ?>" name="order_sum_amount">
+			<input type="hidden" value="<?php echo $sum_quantity; ?>" name="order_sum_quantity">
+			<input type="hidden" value="<?php echo $sum_wallet; ?>" name="order_sum_wallet">
+			
+			<p class="p-3">Order ID- <b><?php echo $order_unique_id; ?></b><br/>
+				Order Details -<br/> 
+				Total Amount Rs. : <b><?php echo $sum_amount;?></b> <br/> 
+				Total Quantity :  <b><?php echo $sum_quantity;?></b><br/>
+				<?php
+					if($user_wallet_owner==1){
+						echo "Total Wallet Cash Used :  <b>".$sum_wallet."</b><br/>";
+					}else{
+						echo "";
+					}
+				?>
+				
+			</p>
 			</div>
 			<div class="form-group pt-4">
 				<label for="uname" class="lable-title">Full Name</label>

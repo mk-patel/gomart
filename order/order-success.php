@@ -15,6 +15,10 @@
 		$order_product_id = mysqli_real_escape_string($conn, $_POST["order_product_id"]);
 		$order_quantity = mysqli_real_escape_string($conn, $_POST["order_quantity"]);
 		$order_pricing = mysqli_real_escape_string($conn, $_POST["order_pricing"]);
+		$order_sum_amount = mysqli_real_escape_string($conn, $_POST["order_sum_amount"]);
+		$order_sum_quantity = mysqli_real_escape_string($conn, $_POST["order_sum_quantity"]);
+		$order_sum_wallet = mysqli_real_escape_string($conn, $_POST["order_sum_wallet"]);
+		
 		$address_fullname = mysqli_real_escape_string($conn, $_POST["full_name"]);
 		$address_mobile = mysqli_real_escape_string($conn, $_POST["address_mobile"]);
 		$address_city = mysqli_real_escape_string($conn, $_POST["address_city"]);
@@ -26,9 +30,21 @@
 		date_default_timezone_set('Asia/Calcutta');
 		$date=date("d M Y")." ".date("H:i A");
 		
-		$place_order = "insert into orders (order_unique_id, order_product_id, order_pricing, order_quantity, order_address, order_user_id, order_date,order_user_status,order_status,cancellation_time)
-						values ('$order_unique_id','$order_product_id','$order_pricing','$order_quantity','$order_address','$user_id','$date','0','Order Placed','Not Cancelled Yet')";
+		$place_order = "insert into orders (order_unique_id, order_product_id, order_pricing, order_quantity,
+						order_sum_amount,order_sum_quantity,order_sum_wallet,
+						order_address, order_user_id, order_date,order_user_status,order_status,cancellation_time)
+						values ('$order_unique_id','$order_product_id','$order_pricing','$order_quantity',
+						'$order_sum_amount','$order_sum_quantity','$order_sum_wallet',
+						'$order_address','$user_id','$date','0','Order Placed','Not Cancelled Yet')";
 		if(mysqli_query($conn, $place_order)){
+			if($user_wallet_owner==1){
+				$user_wallet = "select user_wallet from user where user_id=$user_id";
+				$user_wallet_result = mysqli_query($conn, $user_wallet);
+				$user_wallet_row = mysqli_fetch_assoc($user_wallet_result);
+				$user_wallet = $user_wallet_row['user_wallet'];
+				$user_wallet_update = "update user set user_wallet=(user_wallet-".$order_sum_wallet.") where user_id=$user_id";
+				mysqli_query($conn, $user_wallet_update);
+			}
 			$msg = "Ordered Successfully";
 			$background = "green";
 			$address_select ="select user_id from address where user_id=$user_id";

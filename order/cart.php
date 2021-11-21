@@ -224,7 +224,7 @@
     </header>
 	<div class="container">
 	
-		<form class="form" action="address-interface.php" method="get">
+		<form class="form" action="address-interface.php" method="post">
 			<div class="row">
 			<?php
 			
@@ -237,7 +237,7 @@
 			}
 			
 			// fetching pricing details of the product id.
-			$cart = "select cart_id,pr_id, pr_name, pr_effective_price,pr_image from cart c 
+			$cart = "select cart_id,pr_id, pr_name, pr_effective_price,pr_wallet_disc,pr_image from cart c 
 					inner join product p where (cart_pr_id=pr_id and cart_user_id=$user_id)";
 			$cart_result = mysqli_query($conn, $cart);
 				if(mysqli_num_rows($cart_result) <= 0){
@@ -262,7 +262,11 @@
 								<label class="form-control">Price/Quantity
 									<select class="rounded" name="price[]">
 										<?php
-										echo "<option value='". $cart_row['pr_effective_price']."'> Rs. ".$cart_row['pr_effective_price']." </option>";
+											if($user_wallet_owner==1){
+												echo "<option value='".($cart_row['pr_effective_price']-$cart_row['pr_wallet_disc'])."'>".($cart_row['pr_effective_price']-$cart_row['pr_wallet_disc'])."</option>";
+											}else{
+												echo "<option value='".$cart_row['pr_effective_price']."'>".$cart_row['pr_effective_price']."</option>";
+											}
 										?>
 									</select>
 								</label>
@@ -274,6 +278,13 @@
 										<option value="3">&nbsp;&nbsp;3&nbsp;&nbsp;</option>
 										<option value="4">&nbsp;&nbsp;4&nbsp;&nbsp;</option>
 										<option value="5">&nbsp;&nbsp;5&nbsp;&nbsp;</option>
+										<?php
+										if($user_wallet_owner==1){
+											for($i=1;$i<=5;$i++){
+												echo "<option value='".($i+5)."'>&nbsp;&nbsp;".($i+5)."&nbsp;&nbsp;</option>";
+											}
+										}
+										?>
 									</select>
 								</label>
 							</div>
@@ -281,6 +292,14 @@
 								 <div class="d-flex buttoning">
 									<div class=" mr-auto">
 										<input type="hidden" name="pr_id[]" value="<?php echo $cart_row['pr_id'];?>">
+										<?php
+											if($user_wallet_owner==1){
+												echo "<input type='hidden' name='pr_wallet_disc[]' value='".$cart_row['pr_wallet_disc']."'>";
+											}else{
+												echo "<input type='hidden' name='pr_wallet_disc[]' value='0'>";
+											}
+										?>
+										<input type="hidden" name="pr_wallet_disc[]" value="<?php echo $cart_row['pr_wallet_disc'];?>">
 										<a href="cart.php?delid=<?php echo $cart_row['cart_id'];?>" class="btn btn-warning btn-delete">Delete</a>
 									</div>
 								</div>

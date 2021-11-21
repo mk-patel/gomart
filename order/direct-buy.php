@@ -244,7 +244,7 @@
 		else{
 			$product_row = mysqli_fetch_assoc($product_result);
 	?>
-	<form class="form" action="address-interface.php" method="get">
+	<form class="form" action="address-interface.php" method="post">
 		
 		<div class="col-lg-6 col-md-6 pt-4">
 			<div class="card my_card">
@@ -274,6 +274,13 @@
 								<option value="3">&nbsp;&nbsp;3&nbsp;&nbsp;</option>
 								<option value="4">&nbsp;&nbsp;4&nbsp;&nbsp;</option>
 								<option value="5">&nbsp;&nbsp;5&nbsp;&nbsp;</option>
+								<?php
+								if($user_wallet_owner==1){
+									for($i=1;$i<=5;$i++){
+										echo "<option value='".($i+5)."'>&nbsp;&nbsp;".($i+5)."&nbsp;&nbsp;</option>";
+									}
+								}
+								?>
 							</select>
 						</label>
 					</div>
@@ -281,6 +288,13 @@
 						 <div class="d-flex buttoning">
 							<div class=" mr-auto">
 								<input type="hidden" name="pr_id[]" value="<?php echo $pr_id;?>">
+								<?php
+									if($user_wallet_owner==1){
+										echo "<input type='hidden' name='pr_wallet_disc[]' value='".$product_row['pr_wallet_disc']."'>";
+									}else{
+										echo "<input type='hidden' name='pr_wallet_disc[]' value='0'>";
+									}
+								?>
 								<button type="submit" name="submit" id="submit" class="cart-proceed btn btn-success text-light float-right">Proceed</button>
 							</div>
 						</div>
