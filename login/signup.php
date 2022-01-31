@@ -73,14 +73,14 @@
 	$signup_row = mysqli_fetch_assoc($signup_result);
 	
 	// Selecting service location.
-	$service = "select loc_id,loc_name from service_location";
+	$service = "select loc_id,loc_name,loc_district,loc_state,loc_pincode from service_location";
 	$service_result = mysqli_query($conn, $service);
 	
 ?>
 <body>
 	<nav class="navbar navbar-expand-md bg-light navbar-light">
 		<b class="navbar-brand">
-			<img src="../sys_images/logo.png" alt="Logo" style="width:30px;">&nbsp;&nbsp;&nbsp;<b class="service-name">Go Mart</b>
+			<img src="../sys_images/logo.png" alt="Logo" style="width:30px;">&nbsp;&nbsp;&nbsp;<b class="service-name">Veg Gallery</b>
 		</b>
 		
 		<!-- Toggler/collapsibe Button -->
@@ -100,11 +100,6 @@
 			</ul>
 		</div>
 	</nav>
-	<div class="p-3 bg-light ssipmt mt-1">
-		<div class="container">
-			<img src="../sys_images/ssipmt.jpeg" alt="Logo" style="width:40px;"> Shri Shankaracharya Institute of Professional Management & Technology
-		</div>
-	</div>
 	<div class="intro p-5">
 		<b class="navbar-brand">
 			<img src="../sys_images/new-user.png" alt="Logo" style="width:100px;background:white;border-radius:50%;"><br/><b class="navbar-brand ml-3">Welcome</b>
@@ -118,7 +113,7 @@
 			<form class="form p-5 bg-light rounded" method='post' action="" onsubmit="return post();">
 				<div class="form-group">
 					<label for="uname"><b>Select Service Location</b></label>
-					<select name="user_location" id="user_location" class="custom-select" required>
+					<select name="user_loc_id" id="user_loc_id" class="custom-select" required>
 						<?php
 							$rowcount = mysqli_num_rows($service_result);
 							if($rowcount<=0){
@@ -128,7 +123,7 @@
 								while($service_row = mysqli_fetch_assoc($service_result)){
 									
 						?>
-							<option value="<?php echo $service_row['loc_id']?>"><?php echo $service_row['loc_name']?></option>
+							<option value="<?php echo $service_row['loc_id']?>"><?php echo $service_row['loc_name'].", ".$service_row['loc_district'].", ".$service_row['loc_state'].", ".$service_row['loc_pincode']?></option>
 						<?php
 								}
 							}
@@ -201,7 +196,7 @@
 	function post() {
 		document.getElementById("notify").innerHTML="Please Wait";
 		document.getElementById("submit").disabled=true;
-		var user_location = document.getElementById("user_location").value;
+		var user_loc_id = document.getElementById("user_loc_id").value;
 		var user_full_name = document.getElementById("user_full_name").value;
 		var user_dob = document.getElementById("user_dob").value;
 		var user_gender = document.getElementById("user_gender").value;
@@ -215,7 +210,7 @@
 					url: "signup-insert.php",
 					method: "post",
 					data: {
-						user_location : user_location,
+						user_loc_id : user_loc_id,
 						user_full_name : user_full_name,
 						user_dob : user_dob,
 						user_gender : user_gender,

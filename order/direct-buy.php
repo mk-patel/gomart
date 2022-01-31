@@ -14,6 +14,27 @@
 		$pr_id = $_REQUEST["pid"];
 	}
 	
+	// Setting up the timezone.
+	date_default_timezone_set('Asia/Calcutta');
+	$date=date("d M Y")." ".date("H:i A");
+	
+	//selecting wallet details of user
+	$wallet_data = "select user_wallet,user_wallet_expiry from user where user_id=$user_id";
+	$wallet_data_result = mysqli_query($conn, $wallet_data);
+	$wallet_data_row = mysqli_fetch_assoc($wallet_data_result);
+	$user_wallet = $wallet_data_row["user_wallet"];
+	$user_wallet_expiry = $wallet_data_row["user_wallet_expiry"];
+	
+	//checking wallet validity
+	if($user_wallet_owner==1){
+		if($date>=$user_wallet_expiry){
+			$update_owner = "update user set user_wallet='0', user_wallet_expiry='0', user_wallet_owner='0' where user_id=$user_id";
+			if(mysqli_query($conn, $update_owner)){
+				$transaction = "insert into wallet_transaction (wtrsn_amount, wtrsn_date, wtrsn_type, wtrsn_user_id) values ('-$user_wallet', '$date', 'expired', '$user_id')";
+				mysqli_query($conn, $transaction);
+			}
+		}
+	}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -237,7 +258,9 @@
 	<?php
 	
 	// fetching pricing details of the product id.
-	$product = "select pr_name, pr_effective_price,pr_wallet_disc,pr_image from product where pr_id=$pr_id";
+	$product = "select pr_name, pr_effective_price,pr_wallet_disc,pr_image,pr_status,pr_stock_count,user_wallet from product
+	inner join user on user_id=$user_id
+	where pr_id=$pr_id and pr_status=1 and pr_stock_count!=0";
 	$product_result = mysqli_query($conn, $product);
 		if(mysqli_num_rows($product_result) <= 0)
 			echo "<div class='p-3 bg-danger text-center'>Sorry, it will available soon.</div>";
@@ -258,8 +281,8 @@
 						<label class="form-control">Price/Quantity
 							<select class="rounded" name="price[]">
 								<?php
-								if($user_wallet_owner==1){
-									echo "<option value='".($product_row['pr_effective_price']-$product_row['pr_wallet_disc'])."'>".($product_row['pr_effective_price']-$product_row['pr_wallet_disc'])."</option>";
+								if($user_wallet_owner==1 && $product_row['user_wallet']!=0 && $product_row['user_wallet']>=$product_row['pr_wallet_disc']){
+									echo "<option value='".$product_row['pr_effective_price']."'>".($product_row['pr_effective_price']-$product_row['pr_wallet_disc'])."</option>";
 								}else{
 									echo "<option value='".$product_row['pr_effective_price']."'>".$product_row['pr_effective_price']."</option>";
 								}
@@ -269,15 +292,29 @@
 						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 						<label class="form-control">Quantity
 							<select class="select-field rounded ml-2" name="quantity[]">
-								<option value="1">&nbsp;&nbsp;1&nbsp;&nbsp;</option>
-								<option value="2">&nbsp;&nbsp;2&nbsp;&nbsp;</option>
-								<option value="3">&nbsp;&nbsp;3&nbsp;&nbsp;</option>
-								<option value="4">&nbsp;&nbsp;4&nbsp;&nbsp;</option>
-								<option value="5">&nbsp;&nbsp;5&nbsp;&nbsp;</option>
 								<?php
-								if($user_wallet_owner==1){
-									for($i=1;$i<=5;$i++){
-										echo "<option value='".($i+5)."'>&nbsp;&nbsp;".($i+5)."&nbsp;&nbsp;</option>";
+									//checking stock count for product
+									if($product_row['pr_stock_count']>=5){
+								?>
+									<option value="1">&nbsp;&nbsp;1&nbsp;&nbsp;</option>
+									<option value="2">&nbsp;&nbsp;2&nbsp;&nbsp;</option>
+									<option value="3">&nbsp;&nbsp;3&nbsp;&nbsp;</option>
+									<option value="4">&nbsp;&nbsp;4&nbsp;&nbsp;</option>
+									<option value="5">&nbsp;&nbsp;5&nbsp;&nbsp;</option>
+								<?php
+								}else{
+									for($i=1;$i<=$product_row['pr_stock_count'];$i++){
+										echo "<option value='".$i."'>&nbsp;&nbsp;".$i."&nbsp;&nbsp;</option>";
+									}
+								}
+								if($product_row['pr_stock_count']>=6){
+									if($user_wallet_owner==1){
+										for($i=6;$i<=10;$i++){
+											echo "<option value='".($i)."'>&nbsp;&nbsp;".($i)."&nbsp;&nbsp;</option>";
+											if($product_row['pr_stock_count']==$i){
+												break;
+											}
+										}
 									}
 								}
 								?>
@@ -289,7 +326,7 @@
 							<div class=" mr-auto">
 								<input type="hidden" name="pr_id[]" value="<?php echo $pr_id;?>">
 								<?php
-									if($user_wallet_owner==1){
+									if($user_wallet_owner==1 && $product_row['user_wallet']!=0 && $product_row['user_wallet']>=$product_row['pr_wallet_disc']){
 										echo "<input type='hidden' name='pr_wallet_disc[]' value='".$product_row['pr_wallet_disc']."'>";
 									}else{
 										echo "<input type='hidden' name='pr_wallet_disc[]' value='0'>";

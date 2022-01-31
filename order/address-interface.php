@@ -10,6 +10,27 @@
 	*/
 	require_once '../control/identification.php';
 	
+	// Setting up the timezone.
+	date_default_timezone_set('Asia/Calcutta');
+	$date=date("d M Y")." ".date("H:i A");
+	
+	//selecting wallet details of user
+	$wallet_data = "select user_wallet,user_wallet_expiry from user where user_id=$user_id";
+	$wallet_data_result = mysqli_query($conn, $wallet_data);
+	$wallet_data_row = mysqli_fetch_assoc($wallet_data_result);
+	$user_wallet = $wallet_data_row["user_wallet"];
+	$user_wallet_expiry = $wallet_data_row["user_wallet_expiry"];
+	
+	//checking wallet validity
+	if($user_wallet_owner==1){
+		if($date>=$user_wallet_expiry){
+			$update_owner = "update user set user_wallet='0', user_wallet_expiry='0', user_wallet_owner='0' where user_id=$user_id";
+			if(mysqli_query($conn, $update_owner)){
+				$transaction = "insert into wallet_transaction (wtrsn_amount, wtrsn_date, wtrsn_type, wtrsn_user_id) values ('-$user_wallet', '$date', 'expired', '$user_id')";
+				mysqli_query($conn, $transaction);
+			}
+		}
+	}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,12 +38,12 @@
 <head>
     <meta charset="utf-8">
 	<meta name="viewport" content="initial-scale=1, minimum-scale=1, width=device-width">
-	<meta name="theme-color" content="green" />
-	<title>Go Mart</title>
-	<meta property="og:title" content="Go Mart">
-	<meta name="description" content="Go Mart is collection of fresh vegetables and grocery products.">
-	<meta property="og:description" content="Go Mart is collection of fresh vegetables and grocery products.">
-	<meta name="keywords" content="go mart, vegetable shop in village, grocery shop in village">
+	<meta name="theme-color" content="lightblue" />
+	<title>Bhagyalaxmi Veg Gallery</title>
+	<meta property="og:title" content="Bhagyalaxmi Veg Gallery">
+	<meta name="description" content="Bhagyalaxmi Veg Gallery is collection of fresh vegetables and grocery products.">
+	<meta property="og:description" content="Bhagyalaxmi Veg Gallery is collection of fresh vegetables and grocery products.">
+	<meta name="keywords" content="Bhagyalaxmi Veg Gallery, vegetable shop in village, grocery shop in village">
 	<meta name="author" content="Manish Patel, Nitish Prasad">
     <link rel="shortcut icon" href="../sys_images/logo.png" />
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
@@ -36,7 +57,11 @@
 		margin:0px;
 		padding: 0px;
 		font-family: poppins;
-		background-image:linear-gradient(to bottom,  #ffb5ea , white);
+		background-image: url("../sys_images/bg.jpeg");
+		height: auto; 
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: cover;
 	}
 	*{
 		box-sizing: border-box;
@@ -122,7 +147,7 @@
 		font-size:14px;
 	}
 	.order-book{
-		background:lightblue;
+		background:#9dedf2;
 	}
 	@media(max-width:1000px){
 		nav{
@@ -199,15 +224,22 @@
 					$quantity[] = mysqli_real_escape_string($conn, $_POST["quantity"][$i]);
 					$price[] = mysqli_real_escape_string($conn, $_POST["price"][$i]);
 					$total_price[] = mysqli_real_escape_string($conn, $_POST["price"][$i]*$_POST["quantity"][$i]);
-					$pr_wallet_disc[] = mysqli_real_escape_string($conn, $_POST["pr_wallet_disc"][$i]*$_POST["quantity"][$i]);
+					$pr_wallet_disc[] = mysqli_real_escape_string($conn, ($_POST["pr_wallet_disc"][$i]*$_POST["quantity"][$i]));
 					$sum_amount=$sum_amount+$total_price[$i];
-					if($user_wallet_owner==1){
+					$sum_quantity=$sum_quantity+$quantity[$i];
+					
+					// Checking user wallet amount
+					$user_wallet = "select user_wallet from user where user_id=$user_id";
+					$user_wallet_result = mysqli_query($conn, $user_wallet);
+					$user_wallet_row = mysqli_fetch_assoc($user_wallet_result);
+					$user_wallet = $user_wallet_row['user_wallet'];
+					
+					if($user_wallet_owner==1 && $user_wallet!=0){
 						$sum_wallet=$sum_wallet+$pr_wallet_disc[$i];
 					}else{
 						$sum_wallet=0;
 					}
 					
-					$sum_quantity=$sum_quantity+$quantity[$i];
 			}
 		
 			// generating randome number for order id.
@@ -228,6 +260,10 @@
 			$address_row = mysqli_fetch_assoc($address_result);
 			}
 		}
+		
+		$delivery_charge = "select dlr_charge, dlr_charge_wallet, dlr_time, dlr_time_wallet from delivery where dlr_id=1";
+		$delivery_charge_result = mysqli_query($conn, $delivery_charge);
+		$delivery_row = mysqli_fetch_assoc($delivery_charge_result);
 	?>
 	<form action="order-success.php" id="setupform" method="post" autocomplete="on">
 		<div class="address-body p-3 ">
@@ -237,22 +273,57 @@
 			<input type="hidden" value="<?php echo implode(",",$quantity); ?>" name="order_quantity">
 			<input type="hidden" value="<?php echo implode(",",$pr_id); ?>" name="order_product_id">
 			
-			<input type="hidden" value="<?php echo $sum_amount; ?>" name="order_sum_amount">
-			<input type="hidden" value="<?php echo $sum_quantity; ?>" name="order_sum_quantity">
-			<input type="hidden" value="<?php echo $sum_wallet; ?>" name="order_sum_wallet">
 			
+			<input type="hidden" value="<?php echo $sum_quantity; ?>" name="order_sum_quantity">
+
 			<p class="p-3">Order ID- <b><?php echo $order_unique_id; ?></b><br/>
 				Order Details -<br/> 
-				Total Amount Rs. : <b><?php echo $sum_amount;?></b> <br/> 
 				Total Quantity :  <b><?php echo $sum_quantity;?></b><br/>
 				<?php
 					if($user_wallet_owner==1){
-						echo "Total Wallet Cash Used :  <b>".$sum_wallet."</b><br/>";
-					}else{
-						echo "";
-					}
+				?>
+				Products Amount Rs. : <?php echo $sum_amount;?></br>
+				Deliver Charge Rs. : <?php echo $delivery_row['dlr_charge_wallet'];?></br>
+				<?php 
+				if($user_wallet>=$sum_wallet){
+					echo "<input type='hidden' value='".$sum_wallet."' name='order_sum_wallet'>";
+					echo "Total Wallet Cash Used :  <b>".$sum_wallet."</b><br/>";
+				}
+				else{
+					echo "<input type='hidden' value='0' name='order_sum_wallet'>";
+					echo "Total Wallet Cash Used :  <b> In sufficient amount, required Rs.".$sum_wallet." wallet cash.</b><br/>";
+				}
 				?>
 				
+				<hr/>
+				Total Payable Amount Rs. : 
+				<b>
+					<?php 
+						if($user_wallet>=$sum_wallet){
+							$sum_amount = $sum_amount+$delivery_row['dlr_charge_wallet']-$sum_wallet;
+							echo $sum_amount;
+						}else{
+							$sum_amount = $sum_amount+$delivery_row['dlr_charge_wallet'];
+							echo $sum_amount;
+						}
+					?>
+				</b> 
+				<br/> 
+				<hr/>
+				<input type="hidden" value="<?php echo $sum_amount; ?>" name="order_sum_amount">
+				<?php
+					}else{
+				?>
+				Amount Rs. : <?php echo $sum_amount;?></br>
+				Deliver Charge Rs. : <?php echo $delivery_row['dlr_charge'];?></br>
+				<hr/>
+				<b>Total Payable Amount Rs. : <?php echo ($sum_amount+$delivery_row['dlr_charge']);?></b> <br/> 
+				<hr/>
+				<input type="hidden" value="<?php echo ($sum_amount+$delivery_row['dlr_charge']); ?>" name="order_sum_amount">
+				<input type='hidden' value='0' name='order_sum_wallet'>
+				<?php
+					}
+				?>
 			</p>
 			</div>
 			<div class="form-group pt-4">

@@ -252,7 +252,7 @@
 		foreach ($pr_id_array as $pr_id){
 			
 		// fetching pricing details of the product id.
-		$product = "select pr_id, pr_name, pr_delivery, pr_image from product where pr_id=$pr_id";
+		$product = "select pr_id, pr_name, pr_image from product where pr_id=$pr_id";
 		$product_result = mysqli_query($conn, $product);
 			if(mysqli_num_rows($product_result) <= 0){
 				echo "<div class='p-3 bg-danger text-center'>Sorry, Item not available.</div>";
@@ -277,7 +277,7 @@
 								<?php echo $order_quantity_array[$i]; ?>
 							</label>
 							&nbsp;&nbsp;&nbsp;
-							<label class="form-control">Delivery Charge: <?php echo $product_row['pr_delivery']; ?>
+							<label class="form-control">Delivery Charge: <?php ?>
 						</label>
 						</div>
 					</div>

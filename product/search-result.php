@@ -301,10 +301,8 @@
 		<?php
 		
 			// fetching some data of products.
-			$product = "select pr_id, pr_name, pr_effective_price_1, pr_actual_price, pr_discount, pr_image from product 
-			where ( pr_name like '%$text%' or pr_effective_price_1 like '%$text%' or pr_discount like '%$text%' or 
-			pr_effective_price_2 like '%$text%' or pr_effective_price_3 like '%$text%' or pr_effective_price_4 like '%$text%' or 
-			pr_category like '%$text%') order by pr_id desc";
+			$product = "select pr_id, pr_name, pr_effective_price, pr_actual_price, pr_discount, pr_image from product 
+			where ( pr_name like '%$text%' or pr_effective_price like '%$text%' or pr_discount like '%$text%') order by pr_id desc";
 			$product_result = mysqli_query($conn, $product);
 			if(mysqli_num_rows($product_result) <= 0)
 				echo "<div class='p-3 bg-danger ml-4 text-center'>No Products, It will available soon.</div>";

@@ -35,7 +35,11 @@
 		margin:0px;
 		padding: 0px;
 		font-family: poppins;
-		background-color: #ffffff;
+		background-image: url("../sys_images/bg.jpeg");
+		height: auto; 
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: cover;
 	}
 	*{
 		box-sizing: border-box;
@@ -158,7 +162,7 @@
 		}
 	}
 	.product-desc{
-		background-image:linear-gradient(to bottom,  #ffb5ea , white);
+		background-image:linear-gradient(to bottom, #9dedf2, white);
 	}
 	.product-name{
 		font-size:14px;
@@ -206,6 +210,9 @@
 	  text-decoration: none;
 	  cursor: pointer;
 	}
+	.my_card{
+		font-size:14px;
+	}
 	</style>
 </head>
 <body> 
@@ -234,50 +241,108 @@
 			<p id="responseAlert"></p>
 		</div>
 	</div>
-	<div class="container">
-	<?php
 	
-	// fetching pricing details of the product id.
-	$order = "select order_id, order_unique_id, order_pricing, order_quantity, order_date, order_user_status, order_status from orders where order_user_id=$user_id order by order_id desc";
-	$order_result = mysqli_query($conn, $order);
-	$disable="";
-	$msg = "Cancel Order";
-		if(mysqli_num_rows($order_result) <= 0){
-			echo "<div class='p-3 bg-danger text-center'>Sorry, You don't have any orders.</div>";
-			$disable="disabled";
-		}
-		else{
-			$disable="";
-			while($order_row = mysqli_fetch_assoc($order_result)){
-				if($order_row['order_user_status']==1){
-					$disable="disabled";
-					$msg = "Cancelled";
+	
+	
+	<section class="home-body-content">
+        <div class="container">
+            <div class="row">
+			<?php
+				//delivery details
+				$delivery_charge = "select dlr_time, dlr_time_wallet from delivery where dlr_id=1";
+				$delivery_charge_result = mysqli_query($conn, $delivery_charge);
+				$delivery_row = mysqli_fetch_assoc($delivery_charge_result);
+				
+				// fetching pricing details of the product id.
+				$order = "select order_id, order_unique_id, order_sum_amount, order_sum_quantity, order_date, order_user_status, order_status from orders where order_user_id=$user_id order by order_id desc";
+				$order_result = mysqli_query($conn, $order);
+				$disable="";
+				$msg = "Cancel Order";
+					if(mysqli_num_rows($order_result) <= 0){
+						echo "<div class='p-3 bg-danger text-center'>Sorry, You don't have any orders.</div>";
+						$disable="disabled";
+					}
+					else{
+						$disable="";
+						$disable1="";
+						while($order_row = mysqli_fetch_assoc($order_result)){
+							if($order_row['order_user_status']==1){
+								$disable="disabled";
+								$disable1="disabled";
+								$msg = "Cancelled";
+								$link="#";
+								$bg="#ffb5b5";
+							}
+							else{
+								$disable="";
+								$msg = "Cancel Order";
+								$link="bill.php?oid=".$order_row['order_id'];
+							}
+							if($order_row['order_status']==0){
+								$order_status = "Order Placed";
+								$bg="white";
+							}
+							else if($order_row['order_status']==01){
+								$order_status = "Your order is on the way";
+								$bg="#ffffb5";
+							}
+							else if($order_row['order_status']==11){
+								$order_status = "Successfully Deliered";
+								$bg="#bbffb5";
+								$disable="disabled";
+							}
+							else{
+								$order_status = "Unable to deliver on this address.";
+								$bg="#ffb5b5";
+								$disable="disabled";
+								$disable1="disabled";
+								$link="#";
+							}
+			?>
+                <div class="col-lg-4 col-md-4 p-3">
+                    <div class="card my_card" style="background-color:<?php echo $bg;?>">
+                        <div class="card-body">
+							<a href="order-details.php?oid=<?php echo $order_row['order_id']; ?>">
+								<div class="d-flex mb-3 NU">
+									<div class="p-2 mr-auto">OID: <?php echo $order_row['order_unique_id']; ?></div>
+									<div class="p-2">Date: <?php echo $order_row['order_date']; ?></div>
+								</div>
+								<div class="d-flex mb-3">
+									<div class="p-2 mr-auto NU">Total COD: <b>Rs. <?php echo $order_row['order_sum_amount']; ?></b></div>
+									<div class="p-2">Quantity: <?php echo $order_row['order_sum_quantity']; ?></div>
+								</div>
+								<div class="d-flex mb-3 DG name">
+									<div class="p-2 mr-auto">Status  : <?php echo $order_status; ?></div>
+								</div>
+								<div class="d-flex mb-3 DG name">
+									<div class="p-2 mr-auto">Delivered By  : 
+									<?php 
+									if($user_wallet_owner==1)
+										echo $delivery_row['dlr_time_wallet']; 
+									else
+										echo $delivery_row['dlr_time']; 
+									?>
+									</div>
+								</div>
+							</a>
+                            <div class="d-flex justify-content-between mb-3 buttoning">
+                                <div class="p-2 mr-auto">
+                                    <button <?php echo $disable;?> id="cancel" value="<?php echo $order_row['order_id']; ?>" class="btn border border-danger p-1 cancel-button"><?php echo $msg;?></button>
+                                </div>
+								<div class="p-2">
+                                    <button <?php echo $disable1;?> class="btn btn-success p-1 cancel-button"><a href="<?php echo $link;?>" class="text-light ">Order Bill</a></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php
+					}
 				}
-				else{
-					$disable="";
-					$msg = "Cancel Order";
-				}
-	?>
-		<div class="row d-flex justify-content-center cart-body p-3 border-bottom">
-			<div class="p-5 product-desc rounded">
-				<a href="order-details.php?oid=<?php echo $order_row['order_id']; ?>">
-					<div class="pb-1 text-dark product-name">
-						<p class="details text-">Order ID : <?php echo $order_row['order_unique_id']; ?></p>
-						<p class="h6">Order Date : <?php echo $order_row['order_date']; ?></p>
-						<p class="details">Pricing  : <?php echo $order_row['order_pricing']; ?></p>
-						<p class="details">Quantity  : <?php echo $order_row['order_quantity']; ?></p>
-						<p class="bg-secondary text-light p-2 ">Status  : <?php echo $order_row['order_status']; ?></p>
-					</div>
-				</a>
-				<div class="row text-light product-action">
-					<button <?php echo $disable;?> id="cancel" value="<?php echo $order_row['order_id']; ?>" class="btn btn-warning cancel-button"><?php echo $msg;?></button>
-				</div>
-			</div>
-		</div>
-		<?php
-			}
-		}
-		?>
+				?>
+            </div>
+        </div>
+    </section>
 	</div>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>

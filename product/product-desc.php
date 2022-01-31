@@ -13,6 +13,28 @@
 	if(isset($_REQUEST["pid"])){
 		$pr_id = $_REQUEST["pid"];
 	}
+	
+	// Setting up the timezone.
+	date_default_timezone_set('Asia/Calcutta');
+	$date=date("d M Y")." ".date("H:i A");
+	
+	//selecting wallet details of user
+	$wallet_data = "select user_wallet,user_wallet_expiry from user where user_id=$user_id";
+	$wallet_data_result = mysqli_query($conn, $wallet_data);
+	$wallet_data_row = mysqli_fetch_assoc($wallet_data_result);
+	$user_wallet = $wallet_data_row["user_wallet"];
+	$user_wallet_expiry = $wallet_data_row["user_wallet_expiry"];
+	
+	//checking wallet validity
+	if($user_wallet_owner==1){
+		if($date>=$user_wallet_expiry){
+			$update_owner = "update user set user_wallet='0', user_wallet_expiry='0', user_wallet_owner='0' where user_id=$user_id";
+			if(mysqli_query($conn, $update_owner)){
+				$transaction = "insert into wallet_transaction (wtrsn_amount, wtrsn_date, wtrsn_type, wtrsn_user_id) values ('-$user_wallet', '$date', 'expired', '$user_id')";
+				mysqli_query($conn, $transaction);
+			}
+		}
+	}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -286,11 +308,12 @@
 	<?php
 		
 		// fetching all data of products.
-		$product = "select pr_id, pr_name, pr_actual_price, pr_effective_price,pr_wallet_disc,
-		pr_discount, pr_desc, pr_offers, pr_returns, pr_image,dlr_charge,dlr_time,rt_time from product
+		$product = "select pr_id, pr_name, pr_actual_price, pr_effective_price,pr_wallet_disc,pr_discount, pr_desc, 
+		pr_offers, pr_returns, pr_stock_count, pr_image,dlr_charge,dlr_time,dlr_charge_wallet,dlr_time_wallet,rt_time,user_wallet from product
 		inner join delivery on dlr_loc_id=$user_loc_id
 		inner join returns on rt_loc_id=$user_loc_id
-		where pr_id=$pr_id";
+		inner join user on user_id=$user_id
+		where pr_id=$pr_id and pr_status!=0 and pr_loc_id=$user_loc_id";
 		$product_result = mysqli_query($conn, $product);
 		if(mysqli_num_rows($product_result) <= 0)
 			echo "<div class='p-3 bg-danger text-center'>Sorry, it will available soon.</div>";
@@ -318,24 +341,31 @@
 					</b>
 				</div>
 				<div class="row product-price">
-					<span class="bg-success p-2 rounded text-light actual-price">Rs.&nbsp; 
+					<span class="bg-success p-2 rounded text-light actual-price"><em class='fas fa-rupee-sign'></em>&nbsp; 
 						<?php echo $product_row['pr_effective_price'];?>
-					</span> <del class="p-2 old-price">Rs. <?php echo $product_row['pr_actual_price'];?></del><span class="p-2  text-danger percent-off"><?php echo $product_row['pr_discount'];?>% off</span>
+					</span> <del class="p-2 old-price"><em class='fas fa-rupee-sign'></em> <?php echo $product_row['pr_actual_price'];?></del><span class="p-2  text-danger percent-off"><?php echo $product_row['pr_discount'];?>% off</span>
 				</div>
 				<?php
 					if($user_wallet_owner==1){
-						if($product_row['pr_wallet_disc']!=0){
+						if($product_row['user_wallet']!=0 && $product_row['user_wallet']>=$product_row['pr_wallet_disc']){
+							if($product_row['pr_wallet_disc']!=0){
+								echo "
+									<div class='row wallet mt-2 p-3'>
+										<img src='../sys_images/wallet.png' alt='Logo' style='width:20px;'>&nbsp;&nbsp;From Wallet&nbsp;&nbsp;<b>".$product_row['pr_wallet_disc']."</b>		
+									</div>";
+							}else{
+								echo "";
+							}
+						}else{
 							echo "
 								<div class='row wallet mt-2 p-3'>
-									<img src='../sys_images/wallet.png' alt='Logo' style='width:20px;'>&nbsp;&nbsp;From Wallet&nbsp;&nbsp;<b>".$product_row['pr_wallet_disc']."</b>		
+									<img src='../sys_images/wallet.png' alt='Logo' style='width:20px;'>&nbsp;&nbsp; Insufficient Amount (Required Rs.".$product_row['pr_wallet_disc']." Wallet Cash) 
 								</div>";
-						}else{
-							echo "";
 						}
 					}else{
 						echo "
 							<div class='row wallet mt-2 p-3'>
-								<img src='../sys_images/wallet.png' alt='Logo' style='width:20px;'>&nbsp;&nbsp;Become a Diamond Member to get discount of extra Rs. ".$product_row['pr_wallet_disc']."
+								<img src='../sys_images/wallet.png' alt='Logo' style='width:20px;'>&nbsp;&nbsp;Become a Wallet Owner to get discount of extra Rs. ".$product_row['pr_wallet_disc']."
 							</div>";
 					}
 				?>
@@ -344,9 +374,17 @@
 					<b>By :  
 					<?php 
 					if($product_row['dlr_time'] =='0'){
-						echo "Soon";
+						echo "Fast delivery";
 					}else{
-						echo $product_row['dlr_time'];
+						if($user_wallet_owner==1){
+							if($product_row['dlr_time_wallet'] =='0'){
+								echo "Fast delivery";
+							}else{
+								echo $product_row['dlr_time_wallet'];
+							}
+						}else{
+							echo $product_row['dlr_time'];
+						}
 					}
 					?>
 					<br/>
@@ -354,7 +392,15 @@
 					if($product_row['dlr_charge'] == '0'){
 						echo "Free Delivery - Limited Offer";
 					}else{
-						echo "Delivery Charge Rs. ".$product_row['dlr_charge']." Only";
+						if($user_wallet_owner==1){
+							if($product_row['dlr_charge_wallet'] =='0'){
+								echo "Free delivery";
+							}else{
+								echo "Delivery Charge <em class='fas fa-rupee-sign'></em> ".$product_row['dlr_charge_wallet']." Only";
+							}
+						}else{
+							echo "Delivery Charge <em class='fas fa-rupee-sign'></em> ".$product_row['dlr_charge']." Only";
+						}
 					}	
 					?></b>
 					<br/>
@@ -371,27 +417,39 @@
 				</div>
 				<div class="row wallet mt-2 p-3">
 					<?php
-						if($user_wallet_owner==1 && $product_row['pr_wallet_disc']!=0){
-							echo "Only Pay Rs. ".($product_row['pr_effective_price']-$product_row['pr_wallet_disc']);		
+						if($user_wallet_owner==1 && $product_row['pr_wallet_disc']!=0 && $product_row['user_wallet']>=$product_row['pr_wallet_disc']){
+							echo "Pay Only Rs. ".($product_row['pr_effective_price']-$product_row['pr_wallet_disc'])." On Delivery";		
 						}else{
 							echo "Total Rs. ".$product_row['pr_effective_price'];
 						}
 					?>
 				</div>
 				<div class="pt-4 d-flex justify-content-start">
-					<div class="product-buy">
-						<a class="bg-warning btn p-1 pl-3 pr-3 h6 rounded" href="../order/direct-buy.php?pid=<?php echo $product_row['pr_id'];?>">
-							<b id="notify">Buy Now</b>
-						</a>
-					</div>
-					<div class="">
-						&nbsp;&nbsp;&nbsp;&nbsp;
-					</div>
-					<div class="product-cart">
-						<button id="add-cart" class="btn-warning btn p-1 pl-3 pr-3 h6 rounded">
-							<b>Add to Cart</b>
-						</button>
-					</div>
+						<?php
+							if($product_row['pr_stock_count']<=0){
+								echo "
+								<div class='product-buy'>
+									<a class='bg-secondary btn p-1 pl-3 pr-3 h6 rounded text-light' href='#'>
+										<b>Temporarily Out of Stock</b>
+									</a>
+								</div>";
+							}else{
+								echo "
+								<div class='product-buy'>
+									<a class='bg-warning btn p-1 pl-3 pr-3 h6 rounded' href='../order/direct-buy.php?pid=".$product_row['pr_id']."'>
+										<b id='notify'>Buy Now</b>
+									</a>
+								</div>
+								<div class=''>
+									&nbsp;&nbsp;&nbsp;&nbsp;
+								</div>
+								<div class='product-cart'>
+									<button id='add-cart' class='btn-warning btn p-1 pl-3 pr-3 h6 rounded'>
+										<b>Add to Cart</b>
+									</button>
+								</div>";
+							}
+						?>
 				</div>
 				<div class="rounded text-dark p-2 pt-4 pb-5 product-details">
 					<p class="h6 sub-head">More Details</p>

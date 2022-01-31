@@ -12,12 +12,11 @@
 	*/
 	$mobile_number = $_SESSION["mobile_number"];
 	$password = $_SESSION["password"];
-	$query = "select user_id,mobile_number,password,user_wallet_owner,user_loc_id from user where mobile_number='$mobile_number' and password='$password'";
+	$role = $_SESSION["role"];
+	$query = "select user_id,mobile_number,password,role from user where mobile_number='$mobile_number' and password='$password' and role='$role'";
 	$result = mysqli_query($conn, $query);
 	$row = mysqli_fetch_assoc($result);
 	$user_id = $row["user_id"];
-	$user_loc_id = $row["user_loc_id"];
-	$user_wallet_owner = $row["user_wallet_owner"];
 	if(empty($mobile_number) || empty($password)){
 		header("location: ../login/signin.php");
 		exit();
@@ -27,6 +26,10 @@
 		exit();
 	}
 	else if($password != $row["password"]){
+		header("location: ../login/signin.php");
+		exit();
+	}
+	else if($row["role"] != 'superadmin89'){
 		header("location: ../login/signin.php");
 		exit();
 	}

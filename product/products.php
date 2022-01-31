@@ -10,9 +10,10 @@
 	*/
 	require_once '../control/identification.php';
 	
-	if(isset($_REQUEST["ct"]) && isset($_REQUEST["ct_name"])){
+	if(isset($_REQUEST["ct"]) && isset($_REQUEST["ct_name"]) && isset($_REQUEST["ct_name"])){
 		$ct_id = $_REQUEST["ct"];
 		$ct_name = $_REQUEST["ct_name"];
+		$ct_img = $_REQUEST["img"];
 	}
 ?>
 <!DOCTYPE html>
@@ -136,11 +137,14 @@
 	.advertisement{
 		text-align:center;
 		width:100%;
-		height:200px;
+		height:196px;
 	}
 	.advertisement img{
 		width:auto;
-		height:200px;
+		height:196px;
+		border:2px solid white;
+		border-radius:10px;
+		background:white;
 	}
 	.categories{
 		padding:10px;
@@ -152,8 +156,8 @@
 		text-align:center;
 	}
 	.product-img img{
-		width: 250px; 
-		height:250px;
+		width: 230px; 
+		height:230px;
 	}
 	.product-desc{
 		text-align:center;
@@ -223,8 +227,8 @@
 			height:200px;
 		}
 		.product-img img{
-			width: 200px; 
-			height:200px;
+			width: 120px; 
+			height:120px;
 		}
 	}
 	@media(max-width:700px){
@@ -278,25 +282,25 @@
 	}
 
 	.modal-content {
-	  background-color: #fefefe;
-	  margin: auto;
-	  padding: 20px;
-	  border: 1px solid #888;
-	  width: 80%;
+		background-color: #fefefe;
+		margin: auto;
+		padding: 20px;
+		border: 1px solid #888;
+		width: 80%;
 	}
 
 	.close {
-	  color: #aaaaaa;
-	  float: right;
-	  font-size: 28px;
-	  font-weight: bold;
+		color: #aaaaaa;
+		float: right;
+		font-size: 28px;
+		font-weight: bold;
 	}
 
 	.close:hover,
 	.close:focus {
-	  color: #000;
-	  text-decoration: none;
-	  cursor: pointer;
+		color: #000;
+		text-decoration: none;
+		cursor: pointer;
 	}
 	</style>
 </head>
@@ -310,7 +314,7 @@
 				<a href="../index.php" class="logo"><img src="../sys_images/logo.png" alt="logo"></a>
 			</div>
 			<div class="d-inline-block">
-				<h1><?php echo $ct_name; ?></h1>
+				<h1>Products</h1>
 			</div>
 			<span class="p-1 ml-2 search-bar-header">
 				<input class="rounded search-input" type="text" name="search-header" id="search" placeholder="&nbsp;&nbsp;Search">
@@ -342,32 +346,49 @@
 	<div class="search-result col-5 pb-3 text-center" id="search-result">
 		<!-- Here autocomplete list will be display -->
 	</div>
-	<div class="advertisement">
-		<?php
-			$select = "select ad_image from ads where ad_id=4";
-			$select_result = mysqli_query($conn, $select);
-			if(mysqli_num_rows($select_result)<= 0){
-				echo "No ads yet";
-			}else{
-				$ad_row = mysqli_fetch_assoc($select_result);
-		?>
-			<img src="../<?php echo $ad_row['ad_image'];?>" alt="ad image">
-		<?php
-			}
-		?>
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="d-flex greet p-5 bg-light">
+					<img src="../<?php echo $ct_img;?>" alt="ad image" height="100px">
+					<div class="p-4 mt-3"><?php echo $ct_name;?></div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="advertisement">
+					<?php
+						$select = "select ad_image from ads where ad_id=4";
+						$select_result = mysqli_query($conn, $select);
+						if(mysqli_num_rows($select_result)<= 0){
+							echo "No ads yet";
+						}else{
+							$ad_row = mysqli_fetch_assoc($select_result);
+					?>
+						<img src="../<?php echo $ad_row['ad_image'];?>" alt="ad image">
+					<?php
+						}
+					?>
+				</div>
+			</div>
+		</div>
 	</div>
+	<div class="mt-4 ml-3 mr-3 p-2 bg-light text-center text-dark rounded">
+	</div>
+	<div class="container">
 	<div class="row categories">
 		<?php
 		
 			// fetching some data of products.
-			$product = "select pr_id, pr_name, pr_effective_price, pr_actual_price, pr_discount, pr_image from product where pr_category=$ct_id order by pr_id desc";
+			$product = "select pr_id, pr_name, pr_effective_price, pr_actual_price, pr_discount, pr_wallet_disc, pr_stock_count, pr_image, user_wallet from product 
+			inner join user on user_id=$user_id
+			where pr_category=$ct_id and pr_status!=0 and pr_loc_id=$user_loc_id order by pr_id desc";
 			$product_result = mysqli_query($conn, $product);
 			if(mysqli_num_rows($product_result) <= 0)
-				echo "<div class='p-3 bg-danger ml-4 text-center'>No Products, It will available soon.</div>";
+				echo "<div class='p-3 bg-danger ml-4 text-center'>No Products, It will available soon. Try Changing Your Service Location. </div>";
 			else{
 				while($product_row = mysqli_fetch_assoc($product_result)){
 		?>
-		<div class="col mt-3">
+		<div class="col-sm-3 col-sm-4 col-6 mt-3 mb-3">
 			<div class="product">
 				<a href="product-desc.php?pid=<?php echo $product_row['pr_id'];?>">
 					<div class="product-img">
@@ -377,10 +398,33 @@
 				<div class="product-desc p-2 mt-3">
 					<a href="product-desc.php?pid=<?php echo $product_row['pr_id'];?>">
 						<p><span class="p-1 text-dark"><?php echo $product_row['pr_name'];?></p>
-						<p><span class="bg-success p-1 text-light rounded">Rs. <?php echo $product_row['pr_effective_price'];?></p>
-						<p><span class="p-1 text-danger"><del>Rs. <?php echo $product_row['pr_actual_price'];?></del></span><span class="p-1 text-success h-6"><?php echo $product_row['pr_discount'];?> % Off</span></p>
+						<?php
+							if($user_wallet_owner==1 && $product_row['user_wallet']!=0){
+								echo "<p>
+									<span><img src='../sys_images/wallet.png' alt='wallet' style='width:15px;'> &nbsp; <em class='fas fa-rupee-sign'></em> ".$product_row['pr_effective_price']."-".$product_row['pr_wallet_disc']."
+									</span>
+									</p>
+									<p>
+										<span class='bg-success p-1 text-light rounded pl-2 pr-2'>Pay only <em class='fas fa-rupee-sign'></em> ".($product_row['pr_effective_price']-$product_row['pr_wallet_disc'])."</span>
+									</p>
+								";
+							}else{
+								echo "
+								<p>
+									<span class='bg-success p-1 text-light rounded pl-2 pr-2'><em class='fas fa-rupee-sign'></em> ".$product_row['pr_effective_price']."</span>
+								</p>
+								";
+							}
+						?>
+						<p><span class="p-1 text-danger"><del><em class='fas fa-rupee-sign'></em> <?php echo $product_row['pr_actual_price'];?></del></span><span class="p-1 text-success h-6"><?php echo $product_row['pr_discount'];?> % Off</span></p>
 					</a>
-					<button id="add-cart" value="<?php echo $product_row['pr_id'];?>" class="btn btn-warning text-dark pl-3 pr-3 rounded add-cart">Add to Cart +</button>
+					<?php
+						if($product_row['pr_stock_count']<=0){
+							echo "<button class='btn btn-secondary text-light pl-3 pr-3 rounded add-cart'>Out of Stock</button>";
+						}else{
+							echo "<button id='add-cart' value='".$product_row['pr_id']."' class='btn btn-info text-light pl-2 pr-2 rounded add-cart'><em class='fas fa-shopping-cart'>&nbsp; Add to Cart</em></button>";
+						}
+					?>
 				</div>
 			</div>
 		</div>
@@ -389,6 +433,9 @@
 		}
 		?>
 	</div>
+	</div>
+	
+	
 	<div class="pt-5"></div>
 	<div class="p-2 whatsapp fixed-bottom">
 		Have a query? Send Message <img src="../sys_images/whatsapp.png"> 1234567890
@@ -429,8 +476,6 @@
 					}
 				}
 			});
-			
-			
 		});
 	});
 	</script>

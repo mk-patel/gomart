@@ -10,6 +10,27 @@
 	*/
 	require_once '../control/identification.php';
 
+	// Setting up the timezone.
+	date_default_timezone_set('Asia/Calcutta');
+	$date=date("d M Y")." ".date("H:i A");
+	
+	//selecting wallet details of user
+	$wallet_data = "select user_wallet,user_wallet_expiry from user where user_id=$user_id";
+	$wallet_data_result = mysqli_query($conn, $wallet_data);
+	$wallet_data_row = mysqli_fetch_assoc($wallet_data_result);
+	$user_wallet = $wallet_data_row["user_wallet"];
+	$user_wallet_expiry = $wallet_data_row["user_wallet_expiry"];
+	
+	//checking wallet validity
+	if($user_wallet_owner==1){
+		if($date>=$user_wallet_expiry){
+			$update_owner = "update user set user_wallet='0', user_wallet_expiry='0', user_wallet_owner='0' where user_id=$user_id";
+			if(mysqli_query($conn, $update_owner)){
+				$transaction = "insert into wallet_transaction (wtrsn_amount, wtrsn_date, wtrsn_type, wtrsn_user_id) values ('-$user_wallet', '$date', 'expired', '$user_id')";
+				mysqli_query($conn, $transaction);
+			}
+		}
+	}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,7 +57,11 @@
 		margin:0px;
 		padding: 0px;
 		font-family: poppins;
-		background-image:linear-gradient(to bottom,  #ffb5ea , white);
+		background-image: url("../sys_images/bg.jpeg");
+		height: auto; 
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: cover;
 	}
 	*{
 		box-sizing: border-box;
@@ -237,8 +262,10 @@
 			}
 			
 			// fetching pricing details of the product id.
-			$cart = "select cart_id,pr_id, pr_name, pr_effective_price,pr_wallet_disc,pr_image from cart c 
-					inner join product p where (cart_pr_id=pr_id and cart_user_id=$user_id)";
+			$cart = "select cart_id,pr_id, pr_name, pr_effective_price,pr_wallet_disc, pr_status,pr_stock_count,pr_image, user_wallet from cart c 
+					inner join product p on pr_id=cart_pr_id
+					inner join user on user_id=$user_id
+					where cart_user_id=$user_id and pr_status=1 and pr_stock_count!=0";
 			$cart_result = mysqli_query($conn, $cart);
 				if(mysqli_num_rows($cart_result) <= 0){
 					echo "<div class='p-3 text-center'>Sorry, You have choosed nothing.</div>";
@@ -262,8 +289,9 @@
 								<label class="form-control">Price/Quantity
 									<select class="rounded" name="price[]">
 										<?php
-											if($user_wallet_owner==1){
-												echo "<option value='".($cart_row['pr_effective_price']-$cart_row['pr_wallet_disc'])."'>".($cart_row['pr_effective_price']-$cart_row['pr_wallet_disc'])."</option>";
+											
+											if($user_wallet_owner==1 && $cart_row['user_wallet']!=0  && $cart_row['user_wallet']>=$cart_row['pr_wallet_disc']){
+												echo "<option value='".$cart_row['pr_effective_price']."'>".($cart_row['pr_effective_price']-$cart_row['pr_wallet_disc'])."</option>";
 											}else{
 												echo "<option value='".$cart_row['pr_effective_price']."'>".$cart_row['pr_effective_price']."</option>";
 											}
@@ -273,15 +301,29 @@
 								&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 								<label class="form-control">Quantity
 									<select class="select-field rounded ml-2" name="quantity[]">
-										<option value="1">&nbsp;&nbsp;1&nbsp;&nbsp;</option>
-										<option value="2">&nbsp;&nbsp;2&nbsp;&nbsp;</option>
-										<option value="3">&nbsp;&nbsp;3&nbsp;&nbsp;</option>
-										<option value="4">&nbsp;&nbsp;4&nbsp;&nbsp;</option>
-										<option value="5">&nbsp;&nbsp;5&nbsp;&nbsp;</option>
 										<?php
-										if($user_wallet_owner==1){
-											for($i=1;$i<=5;$i++){
-												echo "<option value='".($i+5)."'>&nbsp;&nbsp;".($i+5)."&nbsp;&nbsp;</option>";
+											//checking stock count for product
+											if($cart_row['pr_stock_count']>=5){
+										?>
+											<option value="1">&nbsp;&nbsp;1&nbsp;&nbsp;</option>
+											<option value="2">&nbsp;&nbsp;2&nbsp;&nbsp;</option>
+											<option value="3">&nbsp;&nbsp;3&nbsp;&nbsp;</option>
+											<option value="4">&nbsp;&nbsp;4&nbsp;&nbsp;</option>
+											<option value="5">&nbsp;&nbsp;5&nbsp;&nbsp;</option>
+										<?php
+										}else{
+											for($i=1;$i<=$cart_row['pr_stock_count'];$i++){
+												echo "<option value='".$i."'>&nbsp;&nbsp;".$i."&nbsp;&nbsp;</option>";
+											}
+										}
+										if($cart_row['pr_stock_count']>=6){
+											if($user_wallet_owner==1){
+												for($i=6;$i<=10;$i++){
+													echo "<option value='".($i)."'>&nbsp;&nbsp;".($i)."&nbsp;&nbsp;</option>";
+													if($cart_row['pr_stock_count']==$i){
+														break;
+													}
+												}
 											}
 										}
 										?>
@@ -293,13 +335,12 @@
 									<div class=" mr-auto">
 										<input type="hidden" name="pr_id[]" value="<?php echo $cart_row['pr_id'];?>">
 										<?php
-											if($user_wallet_owner==1){
+											if($user_wallet_owner==1 && $cart_row['user_wallet']!=0 && $cart_row['user_wallet']>=$cart_row['pr_wallet_disc']){
 												echo "<input type='hidden' name='pr_wallet_disc[]' value='".$cart_row['pr_wallet_disc']."'>";
 											}else{
 												echo "<input type='hidden' name='pr_wallet_disc[]' value='0'>";
 											}
 										?>
-										<input type="hidden" name="pr_wallet_disc[]" value="<?php echo $cart_row['pr_wallet_disc'];?>">
 										<a href="cart.php?delid=<?php echo $cart_row['cart_id'];?>" class="btn btn-warning btn-delete">Delete</a>
 									</div>
 								</div>
