@@ -10,6 +10,27 @@
 	*/
 	require_once '../control/identification.php';
 	
+	// Setting up the timezone.
+	date_default_timezone_set('Asia/Calcutta');
+	$date=date("d M Y")." ".date("H:i A");
+	
+	//selecting wallet details of user
+	$wallet_data = "select user_wallet,user_wallet_expiry from user where user_id=$user_id";
+	$wallet_data_result = mysqli_query($conn, $wallet_data);
+	$wallet_data_row = mysqli_fetch_assoc($wallet_data_result);
+	$user_wallet = $wallet_data_row["user_wallet"];
+	$user_wallet_expiry = $wallet_data_row["user_wallet_expiry"];
+	
+	//checking wallet validity
+	if($user_wallet_owner==1){
+		if($date>=$user_wallet_expiry){
+			$update_owner = "update user set user_wallet='0', user_wallet_expiry='0', user_wallet_owner='0' where user_id=$user_id";
+			if(mysqli_query($conn, $update_owner)){
+				$transaction = "insert into wallet_transaction (wtrsn_amount, wtrsn_date, wtrsn_type, wtrsn_user_id) values ('-$user_wallet', '$date', 'expired', '$user_id')";
+				mysqli_query($conn, $transaction);
+			}
+		}
+	}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -187,6 +208,51 @@
         </div>
     </header>
 	<div class="container">
+	<?php
+		if($user_wallet_owner==1){
+			$wallet = "select user_wallet,user_wallet_expiry from user where user_id=$user_id";
+			$wallet_result = mysqli_query($conn, $wallet);
+			$wallet_row = mysqli_fetch_assoc($wallet_result);
+			
+	?>
+		<div class="p-3 pt-5">
+			<div class="h5"><img src='../sys_images/wallet.png' alt='wallet' style='width:30px;'> Wallet Cash</div>
+			<div class="p-2" style="text-size:14px;">
+				Wallet cash will provide you the facilities like free and fast delivery, <br/>
+				it will also give you addtional discount on products and give you addtional cashback on order.<br/>
+				Your wallet cash will be auto expired after 1 year of subscription.<br/>
+			</div>
+			<div class="pt-3 d-flex h6">
+				<div class="pt-2 text-success">Cash: <b class="h5"><em class='fas fa-rupee-sign'></em> <?php echo $wallet_row['user_wallet'];?></b></div>
+				<div class="pt-2 pl-2 text-danger">&nbsp; Valid Upto: <b class="h5"><?php echo $wallet_row['user_wallet_expiry'];?></b></div><br/>
+			</div>
+			<div class="pt-1 d-flex h6">
+				<div class="pt-2"><a href="../wallet/wallet-request.php" class="border border-success rounded p-1">Requests</a></div><br/>
+				<div class="pt-2 pl-2"><a href="../wallet/wallet-history.php" class="border border-danger rounded p-1">History</a></div>
+				<div class="pt-2 pl-2"><a href="../wallet" class="border border-warning rounded p-1">Recharge</a></div>
+			</div>
+			<hr/>
+		</div>
+	<?php
+		}else{
+			
+	?>
+		<div class="p-3 pt-5">
+			<div class="h5">Wallet Cash Facility</div>
+			<div class="p-2 h6 ">
+				Wallet cash will provide you the facilities like free and fast delivery, <br/>
+				it will also give you addtional discount on products and give you addtional cashback on order.<br/>
+				You will be able to use Singup Bonus after booking any of the wallet recharge plan.<br/>
+			</div>
+			<div class="d-flex h6">
+				<div><a href="../wallet"><button class="btn btn-primary">Activate Now</button></a></div>
+				<div class="pl-2"><a href="../wallet/wallet-request.php"><button class="btn btn-light border border-success rounded"><b>My Requests</b></a></button></div><br/>
+				<hr/>
+			</div>
+		</div>
+	<?php
+		}
+	?>
 		<div class="p-3 pt-5 h5">
 			Actions
 			<div class="pt-3 d-flex ">
@@ -205,8 +271,33 @@
 			$profile_row = mysqli_fetch_assoc($profile_result);
 			$date = $profile_row['user_dob'];
 			$dob = date("Y-m-d", strtotime($date));
+			
+			// Selecting service location.
+			$service = "select loc_id,loc_name,loc_district,loc_state,loc_pincode from service_location";
+			$service_result = mysqli_query($conn, $service);
 		?>
 			<form class="form" method='post' action="" onsubmit="return post();">
+				<div class="form-group">
+					<label for="uname"><b>Change Service Location</b></label>
+					<select name="user_loc_id" id="user_loc_id" class="custom-select" required>
+						<?php
+							$rowcount = mysqli_num_rows($service_result);
+							if($rowcount<=0){
+								echo "<option value='0'>No Service Location Available.</option>";
+							}
+							else{
+								while($service_row = mysqli_fetch_assoc($service_result)){
+									
+						?>
+							<option value="<?php echo $service_row['loc_id']?>"><?php echo $service_row['loc_name'].", ".$service_row['loc_district'].", ".$service_row['loc_state'].", ".$service_row['loc_pincode']?></option>
+						<?php
+								}
+							}
+						?>
+					</select>
+					<div class="valid-feedback">Valid.</div>
+					<div class="invalid-feedback">Please fill out this field.</div>
+				</div>
 				<div class="form-group">
 					<label for="uname">Full Name</label>
 					<input class="form-control" id="user_full_name" name="user_full_name" placeholder="Enter Full Name" value="<?php echo $profile_row['user_full_name'];?>" required>
@@ -250,6 +341,7 @@
 		function post() {
 			
 			document.getElementById("submit").innerHTML="Please Wait";
+			var user_loc_id = document.getElementById("user_loc_id").value;
 			var user_full_name = document.getElementById("user_full_name").value;
 			var user_dob = document.getElementById("user_dob").value;
 			var user_gender = document.getElementById("user_gender").value;
@@ -259,6 +351,7 @@
 					  url: "update-profile.php",
 					  method: "post",
 					  data: {
+						user_loc_id : user_loc_id,
 						user_full_name : user_full_name,
 						user_dob : user_dob,
 						user_gender : user_gender,

@@ -8,6 +8,7 @@
 	
 	// on submit button clicked.
 	if(isset($_POST["user_full_name"])){
+		$user_loc_id = mysqli_real_escape_string($conn, $_POST['user_loc_id']);
 		$user_full_name =  mysqli_real_escape_string($conn, $_POST['user_full_name']);
 		$user_dob = mysqli_real_escape_string($conn, $_POST['user_dob']);
 		$user_gender = mysqli_real_escape_string($conn, $_POST['user_gender']);
@@ -19,7 +20,7 @@
 			date_default_timezone_set('Asia/Calcutta');
 			$date=date("d M Y, h:i A");
 			
-			$profile_update = "update user set user_full_name='$user_full_name', user_dob='$user_dob', user_gender='$user_gender', mobile_number='$mobile_number', user_update_date='$date' where user_id=$user_id";
+			$profile_update = "update user set user_full_name='$user_full_name', user_dob='$user_dob', user_gender='$user_gender', mobile_number='$mobile_number', user_update_date='$date', user_loc_id='$user_loc_id' where user_id=$user_id";
 			if(mysqli_query($conn, $profile_update)){
 				echo "Profile Updated Successfull";
 			}else{

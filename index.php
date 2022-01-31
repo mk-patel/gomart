@@ -12,7 +12,7 @@
 	*/
 	$mobile_number = $_SESSION["mobile_number"];
 	$password = $_SESSION["password"];
-	$query = "select user_id,mobile_number,password,user_full_name,user_wallet_owner from user where mobile_number='$mobile_number' and password='$password'";
+	$query = "select user_id,mobile_number,password,user_full_name,user_wallet_owner,user_wallet,user_wallet_expiry from user where mobile_number='$mobile_number' and password='$password'";
 	$result = mysqli_query($conn, $query);
 	$row = mysqli_fetch_assoc($result);
 	$user_id = $row["user_id"];
@@ -20,9 +20,11 @@
 	$user_full_name = $row["user_full_name"];
 	$first_name = explode(" ", $user_full_name);
 	if($user_wallet_owner==1){
-		$diamond = "<img src='sys_images/diamond.png' alt='wallet' style='width:30px;'>&nbsp;<b class='service-name'>".$first_name[0]."</b>";
+		$wallet_ic = "<a href='wallet/wallet-history.php' class='wallet'>
+                <em><img src='sys_images/wallet.png' alt='wallet' style='width:20px;'></em>
+            </a>";
 	}else{
-		$diamond = "<b class='service-name'>&nbsp;Veg Gallery</b> ";
+		$wallet_ic = "";
 	}
 
 	if(empty($mobile_number) || empty($password)){
@@ -36,6 +38,22 @@
 	else if($password != $row["password"]){
 		header("location: login/signin.php");
 		exit();
+	}
+	
+	// Setting up the timezone.
+	date_default_timezone_set('Asia/Calcutta');
+	$date=date("d M Y")." ".date("H:i A");
+	
+	//checking wallet validity
+	if($user_wallet_owner==1){
+		if($date>=$row["user_wallet_expiry"]){
+			$update_owner = "update user set user_wallet='0', user_wallet_expiry='0', user_wallet_owner='0' where user_id=$user_id";
+			if(mysqli_query($conn, $update_owner)){
+				$user_wallet = $row["user_wallet"];
+				$transaction = "insert into wallet_transaction (wtrsn_amount, wtrsn_date, wtrsn_type, wtrsn_user_id) values ('-$user_wallet', '$date', 'expired', '$user_id')";
+				mysqli_query($conn, $transaction);
+			}
+		}
 	}
 ?>
 <!DOCTYPE html>
@@ -68,9 +86,9 @@
 		background-repeat: no-repeat;
 		background-size: cover;
 	}
-	.wlcm-img{
-		width:auto;
-		height:100%;
+	.wlcm-img img{
+		width:100%;
+		height:100vh;
 	}
 	*{
 		box-sizing: border-box;
@@ -159,6 +177,18 @@
 		font-weight:600;
 		font-size:20px;
 	}
+	.ads-block{
+		width:100%;
+	}
+	.ads-1{
+		width:33%;
+		background:white;
+	}
+	.ads-1 img{
+		width:100%;
+		border:2px solid white;
+		border-radius:10px;
+	}
 	.advertisement{
 		text-align:center;
 		width:100%;
@@ -167,6 +197,9 @@
 	.advertisement img{
 		width:auto;
 		height:200px;
+	}
+	.slideshow-container{
+		display:none;
 	}
 	.categories{
 		padding:30px 5px 5px 15px;
@@ -181,7 +214,7 @@
 		text-align:center;
 	}
 	.product-img img{
-		width: 250px; 
+		width: 230px; 
 		height:230px;
 	}
 	.product-desc{
@@ -213,78 +246,7 @@
 	.ssipmt{
 		text-align:center;
 	}
-	@media(max-width:1000px){
-		nav{
-			position: relative;
-		}
-		.navigation{
-			height: 50px;
-		}
-		.fix-nav{
-			height: 50px;
-		}
-		.menu{
-			position: absolute;
-			top: 110px;
-			left: 0px;
-			background-color: #ffffff;
-			border-bottom: 4px solid #0b9d8a;
-			width: 100%;
-			padding: 0px;
-			margin: 0px;
-			z-index: 102;
-			flex-direction: column;
-			display: none;
-		}
-		.fix-nav .menu{
-			top: 50px;
-		}
-		.navigation.active .menu{
-			display: block;
-		}
-		.advertisement img{
-			width:100%;
-			height:200px;
-		}
-		.product-img img{
-			width: 200px; 
-			height:180px;
-		}
-	}
-	@media(max-width:720px){
-		.wlcm-img{
-			width:100%;
-			height:auto;
-		}
-		.product-img img{
-			width: 100px; 
-			height:90px;
-		}
-		.search-input{
-			width:210px;
-		}
-		.navigation{
-			height: 40px;
-		}
-		.fix-nav{
-			height: 40px;
-		}
-	}
-	@media(max-width:580px){
-		.search-bar-header{
-			display:none;
-		}
-		.search-bar{
-			display:block;
-			width:100%;
-			text-align:center;
-		}
-		.search-input{
-			width:96%;
-			padding:3px;
-		}
-	}
-	<!--for advertisement--------------->
+    <!--for advertisement--------------->
 	.mySlides {
 		display: none;
 	}
@@ -320,12 +282,93 @@
 		width:100%;
 		height:200px;
 	}
+	@media(max-width:1000px){
+		nav{
+			position: relative;
+		}
+		.navigation{
+			height: 50px;
+		}
+		.fix-nav{
+			height: 50px;
+		}
+		.menu{
+			position: absolute;
+			top: 110px;
+			left: 0px;
+			background-color: #ffffff;
+			border-bottom: 4px solid #0b9d8a;
+			width: 100%;
+			padding: 0px;
+			margin: 0px;
+			z-index: 102;
+			flex-direction: column;
+			display: none;
+		}
+		.fix-nav .menu{
+			top: 50px;
+		}
+		.navigation.active .menu{
+			display: block;
+		}
+		.advertisement img{
+			width:100%;
+			height:200px;
+		}
+		.product-img img{
+			width: 120px; 
+			height:120px;
+		}
+		.ads-block{
+			display:none;
+		}
+	}
+	@media(max-width:720px){
+		.wlcm-img{
+			width:100%;
+			height:auto;
+		}
+		.product-img img{
+			width: 100px; 
+			height:100px;
+		}
+		.search-input{
+			width:210px;
+		}
+		.navigation{
+			height: 40px;
+		}
+		.fix-nav{
+			height: 40px;
+		}
+		.slideshow-container{
+			display:block;
+		}
+		.ads-1{
+			display:none;
+		}
+	}
+	@media(max-width:580px){
+		.search-bar-header{
+			display:none;
+		}
+		.search-bar{
+			display:block;
+			width:100%;
+			text-align:center;
+		}
+		.search-input{
+			width:96%;
+			padding:3px;
+		}
+	}
 	#notify{
 		display:none;
 	}
 	.link-bar{
 		font-size:13px;
 	}
+	
 	</style>
 </head>
 <script>
@@ -335,7 +378,7 @@ function loader(){
 }
 </script>
 <div id="loaded" class="img-responsive text-center wlcm-img">
-	<img src="sys_images/entry.jpg" alt="Veg Gallery"/>
+	<img src="sys_images/wlcm.jpg" alt="Go Mart"/>
 </div>
 <body onload="loader()"> 
     <!--menu-bar----------------------------------------->
@@ -346,7 +389,7 @@ function loader(){
 				<b class="logo"><img src="sys_images/logo.png" alt="logo"></b>
 			</div>
 			<div class="d-inline-block">
-				<?php echo $diamond;?>
+				<b class='service-name'>&nbsp;Go Mart</b>
 			</div>
 			<span class="p-1 ml-2 search-bar-header">
 				<input class="rounded search-input" type="text" name="search-header" id="search" placeholder="&nbsp;&nbsp;Search">
@@ -362,6 +405,7 @@ function loader(){
             <a href="user/profile.php" class="user">
                 <em class="fa fa-bars"></em>
             </a>
+			<?php echo $wallet_ic;?>
         </div>
     </header>
 	<div class="pt-1 search-bar">
@@ -376,19 +420,36 @@ function loader(){
 			<img src="sys_images/ssipmt.jpeg" alt="Logo" style="width:40px;"> Shri Shankaracharya Institute of Professional Management & Technology
 		</div>
 	</div>
-	
-	<div class="slideshow-container pt-3">
+	<div class="d-flex justify-content-center ads-block mt-4">
 		<?php
-			$select = "select ad_image from ads limit 3";
-			$select_result = mysqli_query($conn, $select);
+            $select = "select ad_image from ads limit 3";
+		    $select_result = mysqli_query($conn, $select);
 			if(mysqli_num_rows($select_result)<= 0){
 				echo "No ads yet";
 			}else{
 				while($ad_row = mysqli_fetch_assoc($select_result)){
 		?>
-		<div class="mySlides fade">
-		  <img src="<?php echo $ad_row['ad_image'];?>" style="width:100%">
-		</div>
+					<div class="ads-1">
+						<img src="<?php echo $ad_row['ad_image'];?>" alt="ads">
+					</div>
+		<?php
+				}
+			}
+		?>
+	</div>
+	
+	<div class="slideshow-container">
+		<?php
+            $select = "select ad_image from ads limit 3";
+		    $select_result = mysqli_query($conn, $select);
+			if(mysqli_num_rows($select_result)<= 0){
+				echo "No ads yet";
+			}else{
+				while($ad_row = mysqli_fetch_assoc($select_result)){
+		?>
+					<div class="mySlides fade">
+					  <img src="<?php echo $ad_row['ad_image'];?>" style="width:100%">
+					</div>
 		<?php
 				}
 			}
@@ -411,32 +472,58 @@ function loader(){
 		  setTimeout(showSlides, 5000); // Change image every 2 seconds
 		}
 	</script>
-	<div class="row categories">
-	<?php
-		$select = "select ct_id, ct_name, ct_image from categories order by ct_id asc";
-		$select_result = mysqli_query($conn, $select);
-		if(mysqli_num_rows($select_result)<= 0){
-			echo "No categories yet.";
-		}else{
-			while($ct_row = mysqli_fetch_assoc($select_result)){
-	?>
-		<div class="col mt-3 mb-4">
-			<a href="product/products.php?ct=<?php echo $ct_row['ct_id'];?>&ct_name=<?php echo $ct_row['ct_name'];?>">
-				<div class="product">
-					<div class="product-img">
-						<img src="<?php echo $ct_row['ct_image'];?>" alt="Categories">
-					</div>
-					<div class="product-desc">
-						<p>
-							<?php echo $ct_row['ct_name'];?>
-						</p>
-					</div>
-				</div>
-			</a>
-		</div>
+	
+	<div class="mt-4 ml-2 mr-2 p-3 bg-light text-center h6 text-dark rounded">
+		Categories
+	</div>
+	<div class="container">
+		<div class="row categories">
 		<?php
+			$select = "select ct_id, ct_name, ct_image from categories order by ct_id asc";
+			$select_result = mysqli_query($conn, $select);
+			if(mysqli_num_rows($select_result)<= 0){
+				echo "No categories yet.";
+			}else{
+				while($ct_row = mysqli_fetch_assoc($select_result)){
+		?>
+			<div class="col-sm-3 col-sm-4 col-6 mt-3 mb-3">
+				<a href="product/products.php?ct=<?php echo $ct_row['ct_id'];?>&ct_name=<?php echo $ct_row['ct_name'];?>&img=<?php echo $ct_row['ct_image'];?>">
+					<div class="product">
+						<div class="product-img">
+							<img src="<?php echo $ct_row['ct_image'];?>" alt="Categories">
+						</div>
+						<div class="product-desc">
+							<p>
+								<?php echo $ct_row['ct_name'];?>
+							</p>
+						</div>
+					</div>
+				</a>
+			</div>
+			<?php
+				}
 			}
-		}
+			?>
+		</div>
+	</div>
+	<div class="mt-4 ml-2 mr-2 p-3 bg-light text-center h6 text-dark rounded">
+		Advertisement
+	</div>
+	<div class="d-flex justify-content-center ads-block mt-4">
+		<?php
+            $select = "select ad_image from ads limit 3";
+		    $select_result = mysqli_query($conn, $select);
+			if(mysqli_num_rows($select_result)<= 0){
+				echo "No ads yet";
+			}else{
+				while($ad_row = mysqli_fetch_assoc($select_result)){
+		?>
+					<div class="ads-1">
+						<img src="<?php echo $ad_row['ad_image'];?>" alt="ads">
+					</div>
+		<?php
+				}
+			}
 		?>
 	</div>
 	<div class="slideshow-container">
